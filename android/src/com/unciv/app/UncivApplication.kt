@@ -5,7 +5,7 @@ import android.app.Application
 import android.util.Log
 import com.helpshift.Helpshift
 import com.helpshift.UnsupportedOSVersionException
-import com.unciv.app.android.BuildConfig // Assuming BuildConfig is generated in this package
+// import com.unciv.app.android.BuildConfig // Assuming BuildConfig is generated in this package
 import java.util.HashMap
 
 class UncivApplication : Application() {
