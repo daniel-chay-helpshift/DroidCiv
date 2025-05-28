@@ -18,6 +18,7 @@
     -->
     <!-- Cleartext traffic permission solely so users can host their own server without setting up https -->
     <application
+        android:name=".UncivApplication"
         android:usesCleartextTraffic="true"
         android:allowBackup="true"
         android:icon="@mipmap/uncivicon"

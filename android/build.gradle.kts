@@ -8,6 +8,7 @@ plugins {
     id("kotlin-android")
 }
 
+apply(from = "installCreds.gradle") // Apply the credentials file
 android {
     compileSdk = 35
     sourceSets {
@@ -35,6 +36,9 @@ android {
         versionName = BuildConfig.appVersion
 
         base.archivesName.set("Unciv")
+
+        buildConfigField("String", "HELPSHIFT_PLATFORM_ID", "\"${project.ext.get("helpshiftPlatformId")}\"")
+        buildConfigField("String", "HELPSHIFT_DOMAIN_NAME", "\"${project.ext.get("helpshiftDomainName")}\"")
     }
 
     // necessary for Android Work lib
@@ -143,6 +147,9 @@ tasks.register<JavaExec>("run") {
 dependencies {
     implementation("androidx.core:core-ktx:1.15.0")
     implementation("androidx.work:work-runtime-ktx:2.10.0")
+    implementation("androidx.appcompat:appcompat:1.0.0") // Or a more recent compatible version
+    implementation("com.helpshift:helpshift-sdkx:10.4.0")
+
     // Needed to convert e.g. Android 26 API calls to Android 21
     // If you remove this run `./gradlew :android:lintDebug` to ensure everything's okay.
     // If you want to upgrade this, check it's working by building an apk,

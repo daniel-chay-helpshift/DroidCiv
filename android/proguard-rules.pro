@@ -41,3 +41,21 @@
 # These two lines are used with mapping files; see https://developer.android.com/build/shrink-code#retracing
 -keepattributes LineNumberTable,SourceFile
 -renamesourcefileattribute SourceFile
+
+# Keep Helpshift SDK classes and their members
+-keep class com.helpshift.** { *; }
+-dontwarn com.helpshift.**
+
+# Keep Helpshift public API classes and their members specifically
+-keep public class com.helpshift.Helpshift { *; }
+-keep public interface com.helpshift.HelpshiftEventsListener { *; }
+-keep public class com.helpshift.UnsupportedOSVersionException { *; }
+-keep public class com.helpshift.HelpshiftAuthenticationFailureReason { *; }
+
+# If Helpshift internally uses reflection (e.g., with GSON for JSON processing),
+# those classes might also need to be kept. This is a common pattern.
+# Example: -keep class com.google.gson.** { *; }
+#          -dontwarn com.google.gson.**
+
+# Ensure any callback interfaces or data model classes used by Helpshift via reflection are preserved.
+# For example, if custom data objects are passed and reflected upon by the SDK.

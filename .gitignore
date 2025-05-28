@@ -167,3 +167,4 @@ package.json
 # Unsorted additions
 # Detekt
 detekt/reports.html
+/android/installCreds.gradle
