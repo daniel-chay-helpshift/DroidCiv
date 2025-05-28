@@ -19,7 +19,7 @@ buildscript {
     }
     dependencies {
         classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:${com.unciv.build.BuildConfig.kotlinVersion}")
-        classpath("com.android.tools.build:gradle:8.9.1")
+        classpath("com.android.tools.build:gradle:8.10.1")
     }
 }
 
@@ -91,7 +91,8 @@ project(":server") {
 
 }
 
-if (System.getenv("ANDROID_HOME") != null) {
+// if (System.getenv("ANDROID_HOME") != null)
+if(true){
     project(":android") {
         apply(plugin = "com.android.application")
         apply(plugin = "kotlin-android")
