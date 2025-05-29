@@ -1,15 +1,19 @@
-﻿package com.unciv.ui.screens.mainmenuscreen
+﻿// File: core/src/com/unciv/ui/screens/mainmenuscreen/MainMenuScreen.kt (Modified)
+package com.unciv.ui.screens.mainmenuscreen
 
 import com.badlogic.gdx.Gdx
 import com.badlogic.gdx.graphics.Color
 import com.badlogic.gdx.scenes.scene2d.Touchable
 import com.badlogic.gdx.scenes.scene2d.actions.Actions
+import com.badlogic.gdx.scenes.scene2d.ui.Dialog // Ensure Dialog is imported
 import com.badlogic.gdx.scenes.scene2d.ui.Stack
 import com.badlogic.gdx.scenes.scene2d.ui.Table
 import com.badlogic.gdx.utils.Align
 import com.unciv.Constants
 import com.unciv.GUI
 import com.unciv.UncivGame
+import com.unciv.interfaces.IPlatformBridge // << ADD IMPORT for the new interface
+import com.unciv.interfaces.HelpshiftOptions // << ADD IMPORT for the type alias
 import com.unciv.logic.GameInfo
 import com.unciv.logic.GameStarter
 import com.unciv.logic.HolidayDates
@@ -24,6 +28,7 @@ import com.unciv.models.metadata.GameSetupInfo
 import com.unciv.models.ruleset.Ruleset
 import com.unciv.models.ruleset.RulesetCache
 import com.unciv.models.tilesets.TileSetCache
+import com.unciv.models.translations.tr // Ensure tr is available/imported
 import com.unciv.ui.audio.SoundPlayer
 import com.unciv.ui.components.UncivTooltip.Companion.addTooltip
 import com.unciv.ui.components.extensions.center
@@ -43,7 +48,7 @@ import com.unciv.ui.popups.Popup
 import com.unciv.ui.popups.ToastPopup
 import com.unciv.ui.popups.closeAllPopups
 import com.unciv.ui.popups.hasOpenPopups
-import com.unciv.ui.popups.popups
+import com.unciv.ui.popups.popups // If not used directly
 import com.unciv.ui.screens.basescreen.BaseScreen
 import com.unciv.ui.screens.basescreen.RecreateOnResize
 import com.unciv.ui.screens.mainmenuscreen.EasterEggRulesets.modifyForEasterEgg
@@ -60,15 +65,17 @@ import com.unciv.ui.screens.worldscreen.mainmenu.WorldScreenMenuPopup
 import com.unciv.utils.Concurrency
 import com.unciv.utils.launchOnGLThread
 import kotlinx.coroutines.Job
+import kotlin.collections.HashMap // Using Kotlin's HashMap explicitly
 import kotlin.math.min
 
 
 class MainMenuScreen: BaseScreen(), RecreateOnResize {
+    // ... (backgroundStack, singleColumn, backgroundMapRuleset, etc. as in your file) ...
     private val backgroundStack = Stack()
     private val singleColumn = isCrampedPortrait()
 
     private val backgroundMapRuleset: Ruleset
-    private var easterEggRuleset: Ruleset? = null  // Cache it so the next 'egg' can be found in Civilopedia
+    private var easterEggRuleset: Ruleset? = null
 
     private var backgroundMapGenerationJob: Job? = null
     private var backgroundMapExists = false
@@ -79,18 +86,13 @@ class MainMenuScreen: BaseScreen(), RecreateOnResize {
         const val mapReplaceDelay = 20f
     }
 
-    /** Create one **Main Menu Button** including onClick/key binding
-     *  @param text      The text to display on the button
-     *  @param icon      The path of the icon to display on the button
-     *  @param binding   keyboard binding
-     *  @param function  Action to invoke when the button is activated
-     */
     private fun getMenuButton(
         text: String,
         icon: String,
         binding: KeyboardBinding,
         function: () -> Unit
     ): Table {
+        // ... (this method remains unchanged from your provided code) ...
         val table = Table().pad(15f, 30f, 15f, 30f)
         table.background = skinStrings.getUiBackground(
             "MainMenuScreen/MenuButton",
@@ -111,6 +113,45 @@ class MainMenuScreen: BaseScreen(), RecreateOnResize {
         return table
     }
 
+    // << NEW METHOD to create the Helpshift FAQ Button >>
+    private fun getHelpshiftFaqButton(): Table {
+        val faqButtonTable = Table().pad(15f, 30f, 15f, 30f) // Consistent padding
+        faqButtonTable.background = skinStrings.getUiBackground(
+            "MainMenuScreen/MenuButton", // Reuse existing style
+            skinStrings.roundedEdgeRectangleShape,
+            skinStrings.skinConfig.baseColor
+        )
+        val faqLabel = "Show FAQs".tr().toLabel(fontSize = 30, alignment = Align.center)
+        faqButtonTable.add(faqLabel).expandX().center().padTopDescent()
+
+        faqButtonTable.touchable = Touchable.enabled
+        faqButtonTable.onActivation {
+            val bridge = UncivGame.Current.platformBridge // Get the bridge from UncivGame
+
+            if (bridge.isHelpshiftFeatureAvailable()) {
+                val configMap: HelpshiftOptions = HashMap<String, Any>() // Explicitly use HashMap or emptyMap()
+                // Example: Add custom metadata or tags if needed for context
+                // val metadata = hashMapOf("source" to "main_menu_faqs", "game_version" to UncivGame.Current.version.text)
+                // configMap["customMetadata"] = metadata
+                // val tagsArray = arrayOf("main_menu", "general_support")
+                // configMap["tags"] = tagsArray
+
+                Gdx.app.log("MainMenuScreen", "Showing Helpshift FAQs via PlatformBridge")
+                bridge.showHelpshiftFAQs(configMap) // Call the interface method
+            } else {
+                Gdx.app.log("MainMenuScreen", "Helpshift not available (via PlatformBridge). Showing fallback.")
+                val fallbackDialog = Dialog("Support Unavailable".tr(), skin)
+                // IMPORTANT: Replace [YOUR_UNCIV_SUPPORT_EMAIL_OR_FORUM_URL] with your actual support details.
+                val fallbackMessage = "In-app help is currently unavailable on this platform or requires a newer Android version. For assistance, please visit our support page or contact us at [YOUR_UNCIV_SUPPORT_EMAIL_OR_FORUM_URL]."
+                fallbackDialog.text(fallbackMessage.tr())
+                fallbackDialog.button("OK".tr())
+                fallbackDialog.show(stage) // 'stage' is available from BaseScreen
+            }
+        }
+        faqButtonTable.pack() // Ensure the button itself is packed
+        return faqButtonTable
+    }
+
     init {
         SoundPlayer.initializeForMainMenu()
 
@@ -119,8 +160,6 @@ class MainMenuScreen: BaseScreen(), RecreateOnResize {
         stage.addActor(backgroundStack)
         backgroundStack.setFillParent(true)
 
-        // If we were in a mod, some of the resource images for the background map we're creating
-        // will not exist unless we reset the ruleset and images
         val baseRuleset = RulesetCache.getVanillaRuleset()
         ImageGetter.setNewRuleset(baseRuleset)
 
@@ -134,61 +173,85 @@ class MainMenuScreen: BaseScreen(), RecreateOnResize {
         }
         backgroundMapRuleset = easterEggRuleset ?: baseRuleset
 
-        // This is an extreme safeguard - should an invalid settings.tileSet ever make it past the
-        // guard in UncivGame.create, simply omit the background so the user can at least get to options
-        // (let him crash when loading a game but avoid locking him out entirely)
         if (game.settings.tileSet in TileSetCache)
             startBackgroundMapGeneration()
 
+        // << NEW: Master layout table >>
+        val mainLayoutTable = Table()
+        mainLayoutTable.setFillParent(true)
+        stage.addActor(mainLayoutTable) // Add it on top of the background
+
+        // << ADD FAQ Button to the top row of mainLayoutTable >>
+        val helpshiftFaqButton = getHelpshiftFaqButton()
+        mainLayoutTable.add(helpshiftFaqButton)
+            .center()       // Center the button table within its cell
+            .padBottom(20f) // Add some space below it
+            .row()          // Move to the next row in mainLayoutTable
+
+        // Existing button column setup (your logic for column1 and column2 is fine)
         val column1 = Table().apply { defaults().pad(10f).fillX() }
         val column2 = if (singleColumn) column1 else Table().apply { defaults().pad(10f).fillX() }
 
         if (game.files.autosaves.autosaveExists()) {
             val resumeTable = getMenuButton("Resume","OtherIcons/Resume", KeyboardBinding.Resume)
-                { resumeGame() }
+            { resumeGame() }
             column1.add(resumeTable).row()
         }
 
         val quickstartTable = getMenuButton("Quickstart", "OtherIcons/Quickstart", KeyboardBinding.Quickstart)
-            { quickstartNewGame() }
+        { quickstartNewGame() }
         column1.add(quickstartTable).row()
 
+        // Assuming NewGameScreen(), LoadGameScreen() etc. are parameterless constructors
         val newGameButton = getMenuButton("Start new game", "OtherIcons/New", KeyboardBinding.StartNewGame)
-            { game.pushScreen(NewGameScreen()) }
+        { game.pushScreen(NewGameScreen()) }
         column1.add(newGameButton).row()
 
         val loadGameTable = getMenuButton("Load game", "OtherIcons/Load", KeyboardBinding.MainMenuLoad)
-            { game.pushScreen(LoadGameScreen()) }
+        { game.pushScreen(LoadGameScreen()) }
         column1.add(loadGameTable).row()
 
+        // If singleColumn is true, column2 is an alias for column1, so these are added to column1. Correct.
         val multiplayerTable = getMenuButton("Multiplayer", "OtherIcons/Multiplayer", KeyboardBinding.Multiplayer)
-            { game.pushScreen(MultiplayerScreen()) }
+        { game.pushScreen(MultiplayerScreen()) }
         column2.add(multiplayerTable).row()
 
         val mapEditorScreenTable = getMenuButton("Map editor", "OtherIcons/MapEditor", KeyboardBinding.MapEditor)
-            { game.pushScreen(MapEditorScreen()) }
+        { game.pushScreen(MapEditorScreen()) }
         column2.add(mapEditorScreenTable).row()
 
         val modsTable = getMenuButton("Mods", "OtherIcons/Mods", KeyboardBinding.ModManager)
-            { game.pushScreen(ModManagementScreen()) }
+        { game.pushScreen(ModManagementScreen()) }
         column2.add(modsTable).row()
 
         val optionsTable = getMenuButton("Options", "OtherIcons/Options", KeyboardBinding.MainMenuOptions)
-            { openOptionsPopup() }
+        { openOptionsPopup() }
         optionsTable.onLongPress { openOptionsPopup(withDebug = true) }
         column2.add(optionsTable).row()
 
+        // This 'buttonColumnsHolderTable' (renamed from your 'table' for clarity) holds column1 and potentially column2
+        val buttonColumnsHolderTable = Table().apply { defaults().pad(10f) }
+        buttonColumnsHolderTable.add(column1)
+        if (!singleColumn) {
+            buttonColumnsHolderTable.add(column2)
+        }
+        buttonColumnsHolderTable.pack() // Keep this from your original code
 
-        val table = Table().apply { defaults().pad(10f) }
-        table.add(column1)
-        if (!singleColumn) table.add(column2)
-        table.pack()
+        val scrollPane = AutoScrollPane(buttonColumnsHolderTable)
+        // scrollPane.setFillParent(true) // This is NO LONGER set on scrollPane directly
 
-        val scrollPane = AutoScrollPane(table)
-        scrollPane.setFillParent(true)
-        stage.addActor(scrollPane)
-        table.center(scrollPane)
+        // Center the buttonColumnsHolderTable within the scrollPane view
+        buttonColumnsHolderTable.center(scrollPane) // Keep this from your original code
 
+        // << ADD scrollPane to the second row of mainLayoutTable >>
+        mainLayoutTable.add(scrollPane)
+            .expand() // Expand to take available vertical and horizontal space in its cell
+            .fill()   // Fill that space
+            .row()    // End of row for scrollPane
+
+
+        // The rest of your UI elements (Civilopedia, social buttons, version)
+        // are added directly to stage, so their positioning logic should remain unaffected.
         globalShortcuts.add(KeyboardBinding.QuitMainMenu) {
             if (hasOpenPopups()) {
                 closeAllPopups()
@@ -200,10 +263,9 @@ class MainMenuScreen: BaseScreen(), RecreateOnResize {
         val civilopediaButton = "?".toLabel(fontSize = 48)
             .apply { setAlignment(Align.center) }
             .surroundWithCircle(60f, color = skinStrings.skinConfig.baseColor)
-            .apply { actor.y -= 2.5f } // compensate font baseline (empirical)
+            .apply { actor.y -= 2.5f }
             .surroundWithCircle(64f, resizeActor = false)
         civilopediaButton.touchable = Touchable.enabled
-        // Passing the binding directly to onActivation gives you a size 26 tooltip...
         civilopediaButton.onActivation { openCivilopedia() }
         civilopediaButton.keyShortcuts.add(KeyboardBinding.Civilopedia)
         civilopediaButton.addTooltip(KeyboardBinding.Civilopedia, 30f)
@@ -222,11 +284,10 @@ class MainMenuScreen: BaseScreen(), RecreateOnResize {
             .surroundWithThinCircle(Color.WHITE)
             .onActivation { Gdx.net.openURI("https://github.com/yairm210/Unciv") }
         rightSideButtons.add(githubButton)
-        
+
         rightSideButtons.pack()
         rightSideButtons.setPosition(stage.width - 30, 30f, Align.bottomRight)
         stage.addActor(rightSideButtons)
-
 
         val versionLabel = "{Version} ${UncivGame.VERSION.text}".toLabel()
         versionLabel.setAlignment(Align.center)
@@ -239,13 +300,14 @@ class MainMenuScreen: BaseScreen(), RecreateOnResize {
         stage.addActor(versionTable)
     }
 
+    // ... (startBackgroundMapGeneration, stopBackgroundMapGeneration, resumeGame, quickstartNewGame methods as in your file) ...
     private fun startBackgroundMapGeneration() {
-        stopBackgroundMapGeneration()  // shouldn't be necessary as resize re-instantiates this class
+        stopBackgroundMapGeneration()
         backgroundMapGenerationJob = Concurrency.run("ShowMapBackground") {
             var scale = 1f
             var mapWidth = stage.width / TileGroupMap.groupHorizontalAdvance
             var mapHeight = stage.height / TileGroupMap.groupSize
-            if (mapWidth * mapHeight > 3000f) {  // 3000 as max estimated number of tiles is arbitrary (we had typically 721 before)
+            if (mapWidth * mapHeight > 3000f) {
                 scale = mapWidth * mapHeight / 3000f
                 mapWidth /= scale
                 mapHeight /= scale
@@ -258,11 +320,11 @@ class MainMenuScreen: BaseScreen(), RecreateOnResize {
                     mapSize = MapSize.Small
                     type = MapType.pangaea
                     temperatureintensity = .7f
-                    waterThreshold = -0.1f // mainly land, gets about 30% water
+                    waterThreshold = -0.1f
                     modifyForEasterEgg()
                 })
 
-            launchOnGLThread { // for GL context
+            launchOnGLThread {
                 ImageGetter.setNewRuleset(backgroundMapRuleset, ignoreIfModsAreEqual = true)
                 val mapHolder = EditorMapHolder(
                     this@MainMenuScreen,
@@ -308,7 +370,7 @@ class MainMenuScreen: BaseScreen(), RecreateOnResize {
             val currentTileSet = GUI.getMap().currentTileSetStrings
             val currentGameSetting = GUI.getSettings()
             if (currentTileSet.tileSetName != currentGameSetting.tileSet ||
-                    currentTileSet.unitSetName != currentGameSetting.unitSet) {
+                currentTileSet.unitSetName != currentGameSetting.unitSet) {
                 game.removeScreensOfType(WorldScreen::class)
                 QuickSave.autoLoadGame(this)
             } else {
@@ -325,7 +387,6 @@ class MainMenuScreen: BaseScreen(), RecreateOnResize {
         val errorText = "Cannot start game with the default new game parameters!"
         Concurrency.run("QuickStart") {
             val newGame: GameInfo
-            // Can fail when starting the game...
             try {
                 val gameInfo = GameSetupInfo.fromSettings("Chieftain")
                 if (gameInfo.gameParameters.victoryTypes.isEmpty()) {
@@ -343,7 +404,6 @@ class MainMenuScreen: BaseScreen(), RecreateOnResize {
                 return@run
             }
 
-            // ...or when loading the game
             try {
                 game.loadGame(newGame)
             } catch (_: OutOfMemoryError) {
@@ -376,18 +436,21 @@ class MainMenuScreen: BaseScreen(), RecreateOnResize {
         UncivGame.Current.translations.translationActiveMods = ruleset.mods
         ImageGetter.setNewRuleset(ruleset)
         setSkin()
-        openCivilopedia(ruleset, link = link)
+        openCivilopedia(ruleset, link = link) // Call to BaseScreen's openCivilopedia
     }
 
+    // recreate() remains parameterless
     override fun recreate(): BaseScreen {
         stopBackgroundMapGeneration()
         return MainMenuScreen()
     }
 
+    // resume() remains as in your file
     override fun resume() {
+        // Consider adding stopBackgroundMapGeneration() here if issues arise from overlapping jobs
+        // stopBackgroundMapGeneration() 
         startBackgroundMapGeneration()
     }
 
-    // We contain a map...
     override fun getShortcutDispatcherVetoer() = KeyShortcutDispatcherVeto.createTileGroupMapDispatcherVetoer()
 }

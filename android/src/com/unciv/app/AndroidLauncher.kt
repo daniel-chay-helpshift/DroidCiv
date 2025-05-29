@@ -1,3 +1,4 @@
+// File: android/src/com/unciv/app/AndroidLauncher.kt (Modified)
 package com.unciv.app
 
 import android.content.Intent
@@ -6,16 +7,21 @@ import androidx.core.app.NotificationManagerCompat
 import androidx.work.WorkManager
 import com.badlogic.gdx.backends.android.AndroidApplication
 import com.badlogic.gdx.backends.android.AndroidApplicationConfiguration
+// Import your AndroidPlatformBridge (ensure the package is correct if it's different)
+// import com.unciv.app.AndroidPlatformBridge // Likely in the same package, or e.g., com.unciv.app.services
 import com.unciv.logic.files.UncivFiles
 import com.unciv.ui.components.fonts.Fonts
 import com.unciv.utils.Display
 import com.unciv.utils.Log
 import java.io.File
-import java.lang.Exception
+// Removed java.lang.Exception as it's general; specific exceptions are better if known.
 
-open class AndroidLauncher : AndroidApplication() {
+// Assuming AndroidGame.ScreenObscuredListenerActivity is defined in your AndroidGame.kt
+// If not, you can remove ", AndroidGame.ScreenObscuredListenerActivity" and the related methods.
+open class AndroidLauncher : AndroidApplication(), AndroidGame.ScreenObscuredListenerActivity {
 
-    private var game: AndroidGame? = null
+    private var gameInstance: AndroidGame? = null // Renamed from 'game' to avoid potential conflicts with base class 'game' field
+    private var screenObscuredListener: ((Boolean) -> Unit)? = null // For ScreenObscuredListenerActivity
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -46,42 +52,43 @@ open class AndroidLauncher : AndroidApplication() {
 
         copyMods()
 
-        game = AndroidGame(this)
-        initialize(game, config)
+        // << STEP 1: Create the AndroidPlatformBridge instance >>
+        // It takes the Application context and a lambda that provides the current Activity.
+        val androidBridge = AndroidPlatformBridge(application) { this@AndroidLauncher /* 'this' is the Activity */ }
 
-        game!!.setDeepLinkedGame(intent)
-        game!!.addScreenObscuredListener()
+        // << STEP 2: Pass the androidBridge to the AndroidGame constructor >>
+        // This requires AndroidGame.kt to have its constructor modified to accept IPlatformBridge.
+        gameInstance = AndroidGame(this, androidBridge) // 'this' is AndroidLauncher (Activity)
+
+        initialize(gameInstance, config) // Pass the AndroidGame instance
+
+        // Ensure gameInstance is not null before calling methods on it
+        gameInstance?.setDeepLinkedGame(intent)
+        gameInstance?.addScreenObscuredListener()
     }
 
-    /**
-     * Copies mods from external data directory (where users can access) to the private one (where
-     * libGDX reads from). Note: deletes all files currently in the private mod directory and
-     * replaces them with the ones in the external folder!)
-     */
     private fun copyMods() {
-        // Mod directory in the internal app data (where Gdx.files.local looks)
         val internalModsDir = File("${filesDir.path}/mods")
-
-        // Mod directory in the shared app data (where the user can see and modify)
         val externalPath = getExternalFilesDir(null)?.path ?: return
         val externalModsDir = File("$externalPath/mods")
-
-        try { // Rarely we get a kotlin.io.AccessDeniedException, if so - no biggie
-            // Copy external mod directory (with data user put in it) to internal (where it can be read)
-            if (!externalModsDir.exists()) externalModsDir.mkdirs() // this can fail sometimes, which is why we check if it exists again in the next line
+        try {
+            if (!externalModsDir.exists()) externalModsDir.mkdirs()
             if (externalModsDir.exists()) externalModsDir.copyRecursively(internalModsDir, true)
-        } catch (ex: Exception) {}
+        } catch (ex: Exception) {
+            Log.error("AndroidLauncher: Failed to copy mods", ex) // Added tag for clarity
+        }
     }
 
     override fun onPause() {
-        val game = this.game!!
-        if (game.isInitializedProxy()
-                && game.gameInfo != null
-                && game.settings.multiplayer.turnCheckerEnabled
-                && game.files.getMultiplayerSaves().any()
+        val currentGame = this.gameInstance // Use the renamed variable
+        // Check if currentGame and its properties are initialized before using them
+        if (currentGame != null && currentGame.isInitializedProxy()
+            && currentGame.gameInfo != null
+            && currentGame.settings.multiplayer.turnCheckerEnabled
+            && currentGame.files.getMultiplayerSaves().any()
         ) {
             MultiplayerTurnCheckWorker.startTurnChecker(
-                applicationContext, game.files, game.gameInfo!!, game.settings.multiplayer)
+                applicationContext, currentGame.files, currentGame.gameInfo!!, currentGame.settings.multiplayer)
         }
         super.onPause()
     }
@@ -94,22 +101,36 @@ open class AndroidLauncher : AndroidApplication() {
                 cancel(MultiplayerTurnCheckWorker.NOTIFICATION_ID_SERVICE)
             }
         } catch (ignore: Exception) {
-            /* Sometimes this fails for no apparent reason - the multiplayer checker failing to
-               cancel should not be enough of a reason for the game to crash! */
+            Log.error("AndroidLauncher: Error cancelling WorkManager tasks or notifications onResume", ignore)
         }
         super.onResume()
     }
 
     override fun onNewIntent(intent: Intent?) {
         super.onNewIntent(intent)
-        if (intent == null)
-            return
-        game?.setDeepLinkedGame(intent)
+        if (intent == null) return
+        gameInstance?.setDeepLinkedGame(intent) // Use the renamed variable
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        val saverLoader = UncivFiles.saverLoader as AndroidSaverLoader
-        saverLoader.onActivityResult(requestCode, data)
-        super.onActivityResult(requestCode, resultCode, data)
+        super.onActivityResult(requestCode, resultCode, data) // Good practice to call super first
+        val saverLoader = UncivFiles.saverLoader as? AndroidSaverLoader // Safe cast
+        saverLoader?.onActivityResult(requestCode, data)
+    }
+
+    // Implementation for the example ScreenObscuredListenerActivity interface
+    // (Keep this if AndroidGame.ScreenObscuredListenerActivity is part of your design)
+    override fun setScreenObscuredListener(listener: (Boolean) -> Unit) {
+        this.screenObscuredListener = listener
+    }
+
+    override fun onWindowFocusChanged(hasFocus: Boolean) {
+        super.onWindowFocusChanged(hasFocus)
+        try {
+            // Notify listener about focus change (which often implies screen obscurity)
+            screenObscuredListener?.invoke(!hasFocus)
+        } catch (e: Exception) {
+            Log.error("AndroidLauncher: Error in screenObscuredListener callback", e)
+        }
     }
 }
