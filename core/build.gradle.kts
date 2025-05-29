@@ -19,3 +19,7 @@ kotlin {
 java {
     targetCompatibility = JavaVersion.VERSION_1_8
 }
+dependencies {
+    implementation(project(":android"))
+}
+ 

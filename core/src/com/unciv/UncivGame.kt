@@ -51,13 +51,18 @@ import java.io.PrintWriter
 import java.util.EnumSet
 import java.util.UUID
 import kotlin.reflect.KClass
+import com.unciv.interfaces.IPlatformBridge
+
 
 /** Represents the Unciv app itself:
  *  - implements the [Game] interface Gdx requires.
  *  - marshals [platform-specific stuff][PlatformSpecific].
  *  - contains references to [the game being played][gameInfo], and high-level UI elements.
  */
-open class UncivGame(val isConsoleMode: Boolean = false) : Game(), PlatformSpecific {
+open class UncivGame(
+    val platformBridge: IPlatformBridge,
+    val isConsoleMode: Boolean = false
+) : Game(), PlatformSpecific {
 
     var deepLinkedMultiplayerGame: String? = null
     override var customDataDirectory: String? = null
@@ -95,6 +100,9 @@ open class UncivGame(val isConsoleMode: Boolean = false) : Game(), PlatformSpeci
         }
         Current = this
         files = UncivFiles(Gdx.files, customDataDirectory)
+
+        platformBridge.initializePlatformIntegrations()
+        
         Concurrency.run {
             // Delete temporary files created when downloading mods
             val tempFiles = files.getLocalFile("mods").list().filter { !it.isDirectory && it.name().startsWith("temp-") }
