@@ -151,7 +151,39 @@ class MainMenuScreen: BaseScreen(), RecreateOnResize {
         faqButtonTable.pack() // Ensure the button itself is packed
         return faqButtonTable
     }
+    
+    private fun getBulkIssuesButton(): Table { // Returning Table for styling consistency
+        val buttonTable = Table().pad(15f, 30f, 15f, 30f)
+        buttonTable.background = skinStrings.getUiBackground(
+            "MainMenuScreen/MenuButton", // Reuse existing style
+            skinStrings.roundedEdgeRectangleShape,
+            skinStrings.skinConfig.baseColor.cpy().mul(0.8f) // Slightly different color for debug
+        )
+        // Using translation key "Create 100 Issues"
+        val buttonLabel = "Create 100 Issues (Test)".tr().toLabel(fontSize = 26, alignment = Align.center)
+        buttonTable.add(buttonLabel).expandX().center().padTopDescent()
 
+        buttonTable.touchable = Touchable.enabled
+        buttonTable.onActivation {
+            ToastPopup("Starting bulk issue creation...", this@MainMenuScreen, 2000)
+
+            UncivGame.Current.platformBridge.createBulkHelpshiftIssues(
+                issueCount = 100,
+                baseMessage = "Unciv Automated Test Issue",
+                tags = listOf("bulk-test", "unciv-auto", "debug"),
+                customFields = mapOf("test_run_id" to "run_${System.currentTimeMillis()}"),
+                callback = { success, message ->
+                    // This callback runs on the GL thread thanks to AndroidPlatformBridge
+                    val feedback = if (success) "Bulk issues: $message" else "Bulk issue creation failed: $message"
+                    ToastPopup(feedback.tr(), this@MainMenuScreen, 2000)
+                    Gdx.app.log("MainMenuScreen_BulkIssue", feedback)
+                }
+            )
+        }
+        buttonTable.pack()
+        return buttonTable
+    }
+    
     init {
         SoundPlayer.initializeForMainMenu()
 
@@ -250,6 +282,18 @@ class MainMenuScreen: BaseScreen(), RecreateOnResize {
             .row()    // End of row for scrollPane
 
 
+
+        val bulkIssuesDebugButton = getBulkIssuesButton()
+        // Position it in the top-right corner. Adjust padding as needed.
+        // Ensure it doesn't overlap with other top-right elements if any.
+        bulkIssuesDebugButton.pack() // Ensure it's packed before getting width/height for positioning
+        bulkIssuesDebugButton.setPosition(
+            stage.width - bulkIssuesDebugButton.width - 20f, // 20f padding from right edge
+            stage.height - bulkIssuesDebugButton.height - 20f // 20f padding from top edge
+        )
+        stage.addActor(bulkIssuesDebugButton)
+        
+        
         // The rest of your UI elements (Civilopedia, social buttons, version)
         // are added directly to stage, so their positioning logic should remain unaffected.
         globalShortcuts.add(KeyboardBinding.QuitMainMenu) {

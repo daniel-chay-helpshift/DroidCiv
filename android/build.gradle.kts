@@ -6,6 +6,7 @@ import java.util.Properties
 plugins {
     id("com.android.application")
     id("kotlin-android")
+    id("org.jetbrains.kotlin.plugin.serialization") version "1.9.24"
 }
 
 apply(from = "installCreds.gradle") // Apply the credentials file
@@ -39,6 +40,8 @@ android {
 
         buildConfigField("String", "HELPSHIFT_PLATFORM_ID", "\"${project.ext.get("helpshiftPlatformId")}\"")
         buildConfigField("String", "HELPSHIFT_DOMAIN_NAME", "\"${project.ext.get("helpshiftDomainName")}\"")
+        buildConfigField("String", "HELPSHIFT_APP_ID", "\"${project.ext.get("helpshiftAppId")}\"")
+        buildConfigField("String", "HELPSHIFT_API_KEY", "\"${project.ext.get("helpshiftApiKey")}\"")
     }
 
     // necessary for Android Work lib
@@ -146,14 +149,28 @@ tasks.register<JavaExec>("run") {
 }
 
 dependencies {
-    implementation("androidx.core:core-ktx:1.15.0")
-    implementation("androidx.work:work-runtime-ktx:2.10.0")
-    implementation("androidx.appcompat:appcompat:1.0.0") // Or a more recent compatible version
+    implementation("androidx.core:core-ktx:1.16.0")
+    implementation("androidx.work:work-runtime-ktx:2.10.1")
+    implementation("androidx.appcompat:appcompat:1.7.0") // Or a more recent compatible version
     implementation("com.helpshift:helpshift-sdkx:10.4.0")
+// Use latest version
 
+// For an HTTP client (example: Ktor, choose one you prefer)
+
+    // Ktor Client
+    val ktorVersion = "2.3.9" // Use the latest stable Ktor version (check https://ktor.io/docs/releases.html)
+    implementation("io.ktor:ktor-client-android:$ktorVersion")
+    implementation("io.ktor:ktor-client-content-negotiation:$ktorVersion")
+    implementation("io.ktor:ktor-serialization-kotlinx-json:$ktorVersion")
+
+    // For Kotlin Coroutines
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
+    // Kotlinx Serialization JSON library (needed by Ktor's serialization plugin)
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.5.1")
     // Needed to convert e.g. Android 26 API calls to Android 21
     // If you remove this run `./gradlew :android:lintDebug` to ensure everything's okay.
     // If you want to upgrade this, check it's working by building an apk,
     //   or by running `./gradlew :android:assembleRelease` which does that
-    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.5")
 }

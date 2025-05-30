@@ -23,4 +23,20 @@ class DesktopPlatformBridge : IPlatformBridge {
     override fun showHelpshiftConversation(options: HelpshiftOptions) {
         Log.debug("DesktopPlatformBridge: ShowHelpshiftConversation called (no-op). Options: $options")
     }
+
+    override fun createBulkHelpshiftIssues(
+        issueCount: Int,
+        baseMessage: String,
+        tags: List<String>,
+        customFields: Map<String, String>,
+        callback: (success: Boolean, message: String) -> Unit
+    ) {
+        val msg = "Bulk issue creation ($issueCount) not supported on Desktop."
+        Log.debug("DesktopPlatformBridge", msg)
+        // Simulate async callback for consistency if MainMenuScreen expects it
+        kotlin.concurrent.timer(initialDelay = 100L, period = 10000L, action = { // Won't actually repeat
+            com.badlogic.gdx.Gdx.app.postRunnable { callback(false, msg) }
+            this.cancel()
+        })
+    }
 }

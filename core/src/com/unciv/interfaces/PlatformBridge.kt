@@ -30,4 +30,23 @@ interface IPlatformBridge {
     fun showHelpshiftConversation(options: HelpshiftOptions)
 
     // You can add other platform-specific methods here if needed in the future
+
+    /**
+     * Triggers the creation of a specified number of Helpshift issues for testing.
+     * This operation is performed asynchronously.
+     *
+     * @param issueCount The number of issues to create.
+     * @param baseMessage A base message for the issues (e.g., "Automated Test Issue").
+     * @param tags A list of tags to apply to each issue.
+     * @param customFields A map of custom fields (CIFs) to apply.
+     * @param callback A function to be called upon completion or failure.
+     * Parameters: (success: Boolean, message: String)
+     */
+    fun createBulkHelpshiftIssues(
+        issueCount: Int,
+        baseMessage: String,
+        tags: List<String>,
+        customFields: Map<String, String>, // Assuming simple string CIFs for this example
+        callback: (success: Boolean, message: String) -> Unit
+    )
 }
