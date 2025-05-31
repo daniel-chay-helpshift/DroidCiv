@@ -5,7 +5,7 @@ import com.badlogic.gdx.backends.lwjgl3.Lwjgl3ApplicationConfiguration
 import com.sun.jna.platform.win32.Kernel32Util
 import com.unciv.UncivGame
 
-class DesktopGame(config: Lwjgl3ApplicationConfiguration, override var customDataDirectory: String?) : UncivGame() {
+class DesktopGame(config: Lwjgl3ApplicationConfiguration, override var customDataDirectory: String?) : UncivGame(DesktopPlatformBridge()) {
 
     private var discordUpdater = DiscordUpdater()
     private val windowListener = UncivWindowListener()
