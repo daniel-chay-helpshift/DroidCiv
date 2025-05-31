@@ -2,13 +2,13 @@
 import com.unciv.build.AndroidImagePacker
 import com.unciv.build.BuildConfig
 import java.util.Properties
+apply(from = "installCreds.gradle") // Apply the credentials file
 
 plugins {
     id("com.android.application")
     id("kotlin-android")
 }
 
-apply(from = "installCreds.gradle") // Apply the credentials file
 android {
     compileSdk = 35
     sourceSets {
