@@ -12,7 +12,7 @@ import com.unciv.ui.screens.savescreens.LoadGameScreen
 import com.unciv.ui.screens.victoryscreen.VictoryScreen
 import com.unciv.ui.screens.worldscreen.WorldScreen
 
-import com.helpshift.Helpshift
+import com.unciv.UncivGame
 import java.util.HashMap
 
 /** The in-game menu called from the "Hamburger" button top-left
@@ -83,28 +83,43 @@ class WorldScreenMenuPopup(
                 // 1. Create the main configuration map for the Helpshift API call.
                 val config = HashMap<String, Any>()
 
-                // 2. Create a specific map for your Custom Issue Fields (CIFs).
-                val customIssueFields = HashMap<String, String>()
+                // 2. Create the top-level map for CIFs using the "cifs" key.
+                val cifsMap = HashMap<String, Any>() // This will hold all your CIFs
 
-                // 3. Populate the CIF map with your game data.
-                val userId = worldScreen.viewingCiv.civName
-                customIssueFields["user_id"] = userId
+                // 3. Populate the CIFs with their type and value.
+                val userCiv = worldScreen.viewingCiv.civName
+
+                // User ID CIF
+                val userCivField = HashMap<String, String>()
+                userCivField["type"] = "singleline" // As configured in Helpshift
+                userCivField["value"] = userCiv
+                cifsMap["user_civ"] = userCivField // Use the CIF key you configured in Helpshift
 
                 worldScreen.game.gameInfo?.let { gameInfo ->
-                    customIssueFields["game_id"] = gameInfo.gameId
-                    customIssueFields["mods"] = gameInfo.gameParameters.mods.joinToString(", ")
+                    // Game ID CIF
+                    val gameIdField = HashMap<String, String>()
+                    gameIdField["type"] = "singleline" // As configured in Helpshift
+                    gameIdField["value"] = gameInfo.gameId
+                    cifsMap["game_id"] = gameIdField // Use the CIF key
+
+                    // Mods CIF
+                    val modsField = HashMap<String, String>()
+                    modsField["type"] = "multiline" // As configured in Helpshift
+                    modsField["value"] = gameInfo.gameParameters.mods.joinToString(", ")
+                    cifsMap["mods"] = modsField // Use the CIF key
                 }
 
-                // 4. Add your CIFs map to the main config map.
-                // For SDK X, the key is "customIssueFields".
-                config["customIssueFields"] = customIssueFields
+                // 4. Add the CIFs map to the main configuration map using the correct key "cifs".
+                config["cifs"] = cifsMap
 
-                // 5. Call showFAQs with the activity AND the configuration map.
-//                 Helpshift.showFAQs(worldScreen.game.platformSpecific, config)
+                // 5. Use your existing interface to show the FAQs.
+                // This config, including the CIFs, will be used when a new conversation
+                // is started from the FAQ screen.
+                UncivGame.Current.platformBridge.showHelpshiftFAQs(config)
 
             } catch (e: Exception) {
-                // If anything fails, show the FAQs without custom data.
-//                 Helpshift.showFAQs(worldScreen.game.platformSpecific)
+                // Fallback call using the default empty map for options
+                UncivGame.Current.platformBridge.showHelpshiftFAQs()
             }
             close()
         }
