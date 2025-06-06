@@ -5,15 +5,12 @@ import com.badlogic.gdx.Gdx
 import com.badlogic.gdx.graphics.Color
 import com.badlogic.gdx.scenes.scene2d.Touchable
 import com.badlogic.gdx.scenes.scene2d.actions.Actions
-import com.badlogic.gdx.scenes.scene2d.ui.Dialog // Ensure Dialog is imported
 import com.badlogic.gdx.scenes.scene2d.ui.Stack
 import com.badlogic.gdx.scenes.scene2d.ui.Table
 import com.badlogic.gdx.utils.Align
 import com.unciv.Constants
 import com.unciv.GUI
 import com.unciv.UncivGame
-import com.unciv.interfaces.IPlatformBridge // << ADD IMPORT for the new interface
-import com.unciv.interfaces.HelpshiftOptions // << ADD IMPORT for the type alias
 import com.unciv.logic.GameInfo
 import com.unciv.logic.GameStarter
 import com.unciv.logic.HolidayDates
@@ -28,7 +25,6 @@ import com.unciv.models.metadata.GameSetupInfo
 import com.unciv.models.ruleset.Ruleset
 import com.unciv.models.ruleset.RulesetCache
 import com.unciv.models.tilesets.TileSetCache
-import com.unciv.models.translations.tr // Ensure tr is available/imported
 import com.unciv.ui.audio.SoundPlayer
 import com.unciv.ui.components.UncivTooltip.Companion.addTooltip
 import com.unciv.ui.components.extensions.center
@@ -65,7 +61,6 @@ import com.unciv.ui.screens.worldscreen.mainmenu.WorldScreenMenuPopup
 import com.unciv.utils.Concurrency
 import com.unciv.utils.launchOnGLThread
 import kotlinx.coroutines.Job
-import kotlin.collections.HashMap // Using Kotlin's HashMap explicitly
 import kotlin.math.min
 
 
@@ -112,45 +107,45 @@ class MainMenuScreen: BaseScreen(), RecreateOnResize {
         table.pack()
         return table
     }
-
-    // << NEW METHOD to create the Helpshift FAQ Button >>
-    private fun getHelpshiftFaqButton(): Table {
-        val faqButtonTable = Table().pad(15f, 30f, 15f, 30f) // Consistent padding
-        faqButtonTable.background = skinStrings.getUiBackground(
-            "MainMenuScreen/MenuButton", // Reuse existing style
-            skinStrings.roundedEdgeRectangleShape,
-            skinStrings.skinConfig.baseColor
-        )
-        val faqLabel = "Show FAQs".tr().toLabel(fontSize = 30, alignment = Align.center)
-        faqButtonTable.add(faqLabel).expandX().center().padTopDescent()
-
-        faqButtonTable.touchable = Touchable.enabled
-        faqButtonTable.onActivation {
-            val bridge = UncivGame.Current.platformBridge // Get the bridge from UncivGame
-
-            if (bridge.isHelpshiftFeatureAvailable()) {
-                val configMap: HelpshiftOptions = HashMap<String, Any>() // Explicitly use HashMap or emptyMap()
-                // Example: Add custom metadata or tags if needed for context
-                // val metadata = hashMapOf("source" to "main_menu_faqs", "game_version" to UncivGame.Current.version.text)
-                // configMap["customMetadata"] = metadata
-                // val tagsArray = arrayOf("main_menu", "general_support")
-                // configMap["tags"] = tagsArray
-
-                Gdx.app.log("MainMenuScreen", "Showing Helpshift FAQs via PlatformBridge")
-                bridge.showHelpshiftFAQs(configMap) // Call the interface method
-            } else {
-                Gdx.app.log("MainMenuScreen", "Helpshift not available (via PlatformBridge). Showing fallback.")
-                val fallbackDialog = Dialog("Support Unavailable".tr(), skin)
-                // IMPORTANT: Replace [YOUR_UNCIV_SUPPORT_EMAIL_OR_FORUM_URL] with your actual support details.
-                val fallbackMessage = "In-app help is currently unavailable on this platform or requires a newer Android version. For assistance, please visit our support page or contact us at [YOUR_UNCIV_SUPPORT_EMAIL_OR_FORUM_URL]."
-                fallbackDialog.text(fallbackMessage.tr())
-                fallbackDialog.button("OK".tr())
-                fallbackDialog.show(stage) // 'stage' is available from BaseScreen
-            }
-        }
-        faqButtonTable.pack() // Ensure the button itself is packed
-        return faqButtonTable
-    }
+//
+//     // << NEW METHOD to create the Helpshift FAQ Button >>
+//     private fun getHelpshiftFaqButton(): Table {
+//         val faqButtonTable = Table().pad(15f, 30f, 15f, 30f) // Consistent padding
+//         faqButtonTable.background = skinStrings.getUiBackground(
+//             "MainMenuScreen/MenuButton", // Reuse existing style
+//             skinStrings.roundedEdgeRectangleShape,
+//             skinStrings.skinConfig.baseColor
+//         )
+//         val faqLabel = "Show FAQs".tr().toLabel(fontSize = 30, alignment = Align.center)
+//         faqButtonTable.add(faqLabel).expandX().center().padTopDescent()
+//
+//         faqButtonTable.touchable = Touchable.enabled
+//         faqButtonTable.onActivation {
+//             val bridge = UncivGame.Current.platformBridge // Get the bridge from UncivGame
+//
+//             if (bridge.isHelpshiftFeatureAvailable()) {
+//                 val configMap: HelpshiftOptions = HashMap<String, Any>() // Explicitly use HashMap or emptyMap()
+//                 // Example: Add custom metadata or tags if needed for context
+//                 // val metadata = hashMapOf("source" to "main_menu_faqs", "game_version" to UncivGame.Current.version.text)
+//                 // configMap["customMetadata"] = metadata
+//                 // val tagsArray = arrayOf("main_menu", "general_support")
+//                 // configMap["tags"] = tagsArray
+//
+//                 Gdx.app.log("MainMenuScreen", "Showing Helpshift FAQs via PlatformBridge")
+//                 bridge.showHelpshiftFAQs(configMap) // Call the interface method
+//             } else {
+//                 Gdx.app.log("MainMenuScreen", "Helpshift not available (via PlatformBridge). Showing fallback.")
+//                 val fallbackDialog = Dialog("Support Unavailable".tr(), skin)
+//                 // IMPORTANT: Replace [YOUR_UNCIV_SUPPORT_EMAIL_OR_FORUM_URL] with your actual support details.
+//                 val fallbackMessage = "In-app help is currently unavailable on this platform or requires a newer Android version. For assistance, please visit our support page or contact us at [YOUR_UNCIV_SUPPORT_EMAIL_OR_FORUM_URL]."
+//                 fallbackDialog.text(fallbackMessage.tr())
+//                 fallbackDialog.button("OK".tr())
+//                 fallbackDialog.show(stage) // 'stage' is available from BaseScreen
+//             }
+//         }
+//         faqButtonTable.pack() // Ensure the button itself is packed
+//         return faqButtonTable
+//     }
 
     init {
         SoundPlayer.initializeForMainMenu()
@@ -182,11 +177,11 @@ class MainMenuScreen: BaseScreen(), RecreateOnResize {
         stage.addActor(mainLayoutTable) // Add it on top of the background
 
         // << ADD FAQ Button to the top row of mainLayoutTable >>
-        val helpshiftFaqButton = getHelpshiftFaqButton()
-        mainLayoutTable.add(helpshiftFaqButton)
-            .center()       // Center the button table within its cell
-            .padBottom(20f) // Add some space below it
-            .row()          // Move to the next row in mainLayoutTable
+//         val helpshiftFaqButton = getHelpshiftFaqButton()
+//         mainLayoutTable.add(helpshiftFaqButton)
+//             .center()       // Center the button table within its cell
+//             .padBottom(20f) // Add some space below it
+//             .row()          // Move to the next row in mainLayoutTable
 
         // Existing button column setup (your logic for column1 and column2 is fine)
         val column1 = Table().apply { defaults().pad(10f).fillX() }

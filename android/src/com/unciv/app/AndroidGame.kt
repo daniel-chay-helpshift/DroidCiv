@@ -5,13 +5,12 @@ import android.app.Activity
 import android.content.Intent
 import android.graphics.Rect
 import android.net.Uri
-import android.view.View
 import android.view.ViewTreeObserver
 import com.badlogic.gdx.Gdx
 import com.badlogic.gdx.backends.android.AndroidGraphics
 import com.badlogic.gdx.math.Rectangle
 import com.unciv.UncivGame
-import com.unciv.interfaces.IPlatformBridge // << ADD IMPORT
+import com.unciv.interfaces.IHelpshiftPlatformBridge // << ADD IMPORT
 import com.unciv.logic.event.EventBus
 import com.unciv.ui.screens.basescreen.BaseScreen
 import com.unciv.ui.screens.basescreen.UncivStage
@@ -20,7 +19,7 @@ import com.unciv.utils.Log
 
 class AndroidGame(
     private val activity: Activity, // Keep for Android-specific needs within this class
-    platformBridge: IPlatformBridge // << ADD IPlatformBridge parameter
+    platformBridge: IHelpshiftPlatformBridge // << ADD IPlatformBridge parameter
 ) : UncivGame(platformBridge, isConsoleMode = false) { // << PASS to UncivGame super
 
     private var lastOrientation = activity.resources.configuration.orientation

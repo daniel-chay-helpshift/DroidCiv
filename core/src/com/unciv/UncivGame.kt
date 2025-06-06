@@ -51,7 +51,7 @@ import java.io.PrintWriter
 import java.util.EnumSet
 import java.util.UUID
 import kotlin.reflect.KClass
-import com.unciv.interfaces.IPlatformBridge
+import com.unciv.interfaces.IHelpshiftPlatformBridge
 
 
 /** Represents the Unciv app itself:
@@ -60,7 +60,7 @@ import com.unciv.interfaces.IPlatformBridge
  *  - contains references to [the game being played][gameInfo], and high-level UI elements.
  */
 open class UncivGame(
-    val platformBridge: IPlatformBridge,
+    val platformBridge: IHelpshiftPlatformBridge,
     val isConsoleMode: Boolean = false
 ) : Game(), PlatformSpecific {
 

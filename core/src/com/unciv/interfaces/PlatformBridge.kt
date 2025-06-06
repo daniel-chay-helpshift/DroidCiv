@@ -4,7 +4,7 @@ package com.unciv.interfaces
 import kotlin.collections.Map // Use Kotlin's Map
 typealias HelpshiftOptions = Map<String, Any>
 
-interface IPlatformBridge {
+interface IHelpshiftPlatformBridge {
     /**
      * Initializes any platform-specific SDKs like Helpshift.
      * Called early in the game's lifecycle.

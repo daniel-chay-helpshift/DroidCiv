@@ -28,7 +28,7 @@ internal object ConsoleLauncher {
         Log.backend = DesktopLogBackend()
 
         // Create the Desktop/Console specific bridge
-        val platformBridge = DesktopPlatformBridge()
+        val platformBridge = DesktopHelpshiftPlatformBridge()
         
         val game = UncivGame(platformBridge,true)
 

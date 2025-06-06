@@ -2,11 +2,11 @@
 // (Or place in core if it has no desktop-specific dependencies)
 package com.unciv.app.desktop // Or your chosen package
 
-import com.unciv.interfaces.IPlatformBridge
+import com.unciv.interfaces.IHelpshiftPlatformBridge
 import com.unciv.interfaces.HelpshiftOptions
 import com.unciv.utils.Log // Assuming Log works on desktop
 
-class DesktopPlatformBridge : IPlatformBridge {
+class DesktopHelpshiftPlatformBridge : IHelpshiftPlatformBridge {
     override fun initializePlatformIntegrations() {
         Log.debug("DesktopPlatformBridge: Initializing (no Helpshift).")
     }

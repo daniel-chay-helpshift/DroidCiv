@@ -12,6 +12,9 @@ import com.unciv.ui.screens.savescreens.LoadGameScreen
 import com.unciv.ui.screens.victoryscreen.VictoryScreen
 import com.unciv.ui.screens.worldscreen.WorldScreen
 
+import com.helpshift.Helpshift
+import java.util.HashMap
+
 /** The in-game menu called from the "Hamburger" button top-left
  *
  *  Popup automatically opens as soon as it's initialized
@@ -74,6 +77,39 @@ class WorldScreenMenuPopup(
             worldScreen.openOptionsPopup(withDebug = true)
         }
         optionsCell.nextColumn()
+
+        val faqCell = addButton("FAQ", null) {
+            try {
+                // 1. Create the main configuration map for the Helpshift API call.
+                val config = HashMap<String, Any>()
+
+                // 2. Create a specific map for your Custom Issue Fields (CIFs).
+                val customIssueFields = HashMap<String, String>()
+
+                // 3. Populate the CIF map with your game data.
+                val userId = worldScreen.viewingCiv.civName
+                customIssueFields["user_id"] = userId
+
+                worldScreen.game.gameInfo?.let { gameInfo ->
+                    customIssueFields["game_id"] = gameInfo.gameId
+                    customIssueFields["mods"] = gameInfo.gameParameters.mods.joinToString(", ")
+                }
+
+                // 4. Add your CIFs map to the main config map.
+                // For SDK X, the key is "customIssueFields".
+                config["customIssueFields"] = customIssueFields
+
+                // 5. Call showFAQs with the activity AND the configuration map.
+//                 Helpshift.showFAQs(worldScreen.game.platformSpecific, config)
+
+            } catch (e: Exception) {
+                // If anything fails, show the FAQs without custom data.
+//                 Helpshift.showFAQs(worldScreen.game.platformSpecific)
+            }
+            close()
+        }
+        faqCell.row()
+        
         if (showMusic)
             addButton("Music", KeyboardBinding.MusicPlayer) {
                 close()

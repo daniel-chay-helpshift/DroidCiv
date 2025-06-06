@@ -8,17 +8,15 @@ import android.util.Log
 import com.helpshift.Helpshift
 import com.helpshift.UnsupportedOSVersionException
 // Ensure this import path to YOUR Android module's BuildConfig is correct:
-import com.unciv.app.BuildConfig // Example: If your app's package is com.unciv.app
 // Or, if your Android app module has a different package ID for BuildConfig, e.g.:
 // import com.yourcompany.uncivandroid.BuildConfig 
-import com.unciv.interfaces.IPlatformBridge
+import com.unciv.interfaces.IHelpshiftPlatformBridge
 import com.unciv.interfaces.HelpshiftOptions
-import kotlin.collections.HashMap
 
-class AndroidPlatformBridge(
+class AndroidHelpshiftPlatformBridge(
     private val application: Application,
     private val activityProvider: () -> Activity? // Function to safely get the current foreground Activity
-) : IPlatformBridge {
+) : IHelpshiftPlatformBridge {
 
     private var helpshiftInitializedSuccessfully = false
 

@@ -54,7 +54,7 @@ open class AndroidLauncher : AndroidApplication(), AndroidGame.ScreenObscuredLis
 
         // << STEP 1: Create the AndroidPlatformBridge instance >>
         // It takes the Application context and a lambda that provides the current Activity.
-        val androidBridge = AndroidPlatformBridge(application) { this@AndroidLauncher /* 'this' is the Activity */ }
+        val androidBridge = AndroidHelpshiftPlatformBridge(application) { this@AndroidLauncher /* 'this' is the Activity */ }
 
         // << STEP 2: Pass the androidBridge to the AndroidGame constructor >>
         // This requires AndroidGame.kt to have its constructor modified to accept IPlatformBridge.
